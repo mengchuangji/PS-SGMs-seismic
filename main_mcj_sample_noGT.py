@@ -28,7 +28,7 @@ def parse_args_and_config():
     #D:\datasets\CelebA\CelebA\Img\img_align_celeba
     parser.add_argument('-n', '--num_variations', type=int, default=1, help='Number of variations to produce')
     parser.add_argument('-s', '--sigma_0', type=float, default=0.1, help='Noise std to add to observation')
-    parser.add_argument('--degradation', type=str, default='den', help='Degradation: inp | deblur_uni | deblur_gauss | sr2 | sr4 | cs4 | cs8 | cs16')
+    parser.add_argument('--degradation', type=str, default='den', help='Degradation: rec | den ')
 
     args = parser.parse_args()
     args.log_path = os.path.join(args.exp, 'logs', args.doc)
@@ -55,8 +55,8 @@ def parse_args_and_config():
     # os.makedirs(os.path.join(args.exp, 'image_samples'), exist_ok=True)
     # args.image_folder = os.path.join(args.exp, 'image_samples', args.image_folder)
 
-    # args.image_folder ='exp/logs/celeba/results/test' # syn | den | inp | cs | deblur_gauss
-    args.image_folder = 'exp/logs/marmousi/results'  # syn | den | inp | cs | deblur_gauss
+    # args.image_folder ='exp/logs/celeba/results/test'
+    args.image_folder = 'exp/logs/marmousi/results'
 
     # if not os.path.exists(args.image_folder):
     #     os.makedirs(args.image_folder)
@@ -114,22 +114,25 @@ def main():
     # Mms35Segyopen/31/500/noNM  Mms35Segyopen_nm/64/550/NM
     # MmsSegyopen_nm/60/550/NM MmsSegyopen/30/500/noNM
     # marmousi_v2_nm/27/500/NM/180000
-    args.log_path_model ='/home/shendi_mcj/code/Reproducible/ncsnv2-master/exp/logs/marmousi_v2_nm'
+    args.log_path_model ='./exp/logs/marmousi_v2_nm'
     args.image_folder = 'exp/logs/marmousi_v2_nm/results'
 
-    config.data.image_size=128
-    config.sampling.ckpt_id=210000   #v2/13/0.01/450/150000 2/90/0.01/500/180000
+    # The ckpt_id of the trained SGMs, the SGMs model is provided. Please retrain it if necessary.
+    config.sampling.ckpt_id = 210000
 
-    args.degradation='inp' # inp  den
-    # args.sigma_0 = 0.2 #denoise 0.203
-    config.sampling.batch_size=1
-    args.num_variations=3
+    # 'den' represents the denoising task, and 'rec' represents the reconstruction task (or simultaneous denoising and interpolation)
+    args.degradation = 'rec'  # rec  den
 
-    config.data.seis_rescaled = False # False True
-    config.model.num_classes=500
-    # config.model.sigma_begin = 90
-    config.model.sigma_begin=27 # 9 13 27
-    config.model.sigma_end = 0.01 #0.01
+    # The number of data processed at the same time, custom, default is 1
+    config.sampling.batch_size = 1
+    # The number of samples (random solutions) you want to generate, custom
+    args.num_variations = 3
+
+    # The parameters of SGMs are fixed and do not need to be set during testing (sampling).
+    config.data.seis_rescaled = False  # False True
+    config.model.num_classes = 500
+    config.model.sigma_begin = 27  #
+    config.model.sigma_end = 0.01  #
     config.model.sigma_dist = 'geometric'
 
     print(">" * 80)
@@ -146,13 +149,17 @@ def main():
     obs_GT = torch.from_numpy(obs_GT1).contiguous().view(1, -1, obs_GT1.shape[-2], obs_GT1.shape[-1]).type(
         torch.FloatTensor)
 
+
     # The noise level you set when testing
     sigma_preset=0.8*abs(observation_['H']).max()
     print("sigma_preset:", sigma_preset)
 
     obs=obs_GT+sigma_preset*torch.randn_like(obs_GT)
 
-    # Automatic noise level estimation by VI-non-IID
+    # Get the shape of the observed data
+    config.data.image_shape = obs_GT1.shape
+
+    # Automatic noise level estimation by VI-non-IID or the user can set it by himself (i.e., according to the interval [sigma_dict['min'],sigma_dict['max']]).
     from utils.estimate_sigma_using_VInonIID import estimate_sigma_using_VInonIID
     sigma_dict=estimate_sigma_using_VInonIID(obs[0].view(1,-1,obs.shape[2],obs.shape[3]))
     args.sigma_0 = sigma_dict['median']

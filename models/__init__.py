@@ -27,6 +27,9 @@ def mat_by_vec(M, v):
 def vec_to_image(v, img_dim):
     return v.view(v.shape[0], v.shape[1], img_dim, img_dim)
 
+def vec_to_image_(v, img_shape):
+    return v.view(v.shape[0], v.shape[1], img_shape[0], img_shape[1])
+
 def invert_diag(M):
     M_inv = torch.zeros_like(M)
     M_inv[M != 0] = 1 / M[M != 0]
@@ -131,6 +134,7 @@ def general_anneal_Langevin_dynamics_den(y_0, x_mod, scorenet, sigmas, n_steps_e
     # print("最接近的sigma_noise值的索引:", index)
 
     img_dim = x_mod.shape[2] #128 x_mod:(1,1,128,128)
+    img_shape = (x_mod.shape[2], x_mod.shape[3])
     images = []
     x_mode_list=[]
     x_mod=y_0.view(x_mod.shape[0],x_mod.shape[1],x_mod.shape[2],x_mod.shape[3])
@@ -149,7 +153,8 @@ def general_anneal_Langevin_dynamics_den(y_0, x_mod, scorenet, sigmas, n_steps_e
                 noise = torch.randn_like(x_mod)
                 step_vector = torch.as_tensor(step_vector, dtype=torch.float64)
                 x_mod= x_mod + step_vector * grad + noise * torch.sqrt(step_vector * 2)
-                x_mod = vec_to_image(x_mod, img_dim)
+                # x_mod = vec_to_image(x_mod, img_dim)
+                x_mod = vec_to_image_(x_mod, img_shape)
 
                 if not final_only:
                     images.append(x_mod.to('cpu'))
@@ -180,7 +185,8 @@ def general_anneal_Langevin_dynamics_inp(M, y_0, x_mod, scorenet, sigmas, n_step
     index = np.abs(sigmas - sigma_0).argmin()
     print('index of sigma:', index, 'sigma_index=', sigmas[index])
 
-    img_dim = x_mod.shape[2]#128
+    img_dim = x_mod.shape[2]  # 128 If the data is square
+    img_shape = (x_mod.shape[2], x_mod.shape[3])
     images = []
     # x_mod= torch.rand_like(y_0)
     x_mode_list = []
@@ -205,7 +211,7 @@ def general_anneal_Langevin_dynamics_inp(M, y_0, x_mod, scorenet, sigmas, n_step
                     noise = torch.randn_like(x_mod)
                     step_vector = torch.as_tensor(step_vector, dtype=torch.float64)
                     x_mod = x_mod + step_vector * grad + noise * torch.sqrt(step_vector * 2)
-                    x_mod = vec_to_image(x_mod, img_dim)
+                    x_mod = vec_to_image_(x_mod, img_shape)
 
                     if not final_only:
                         images.append(x_mod.to('cpu'))
@@ -234,7 +240,7 @@ def general_anneal_Langevin_dynamics_inp(M, y_0, x_mod, scorenet, sigmas, n_step
                     noise = torch.randn_like(x_mod)
                     step_vector = torch.as_tensor(step_vector, dtype=torch.float64)
                     x_mod = x_mod + step_vector * grad + noise * torch.sqrt(step_vector * 2)
-                    x_mod = vec_to_image(x_mod, img_dim)
+                    x_mod = vec_to_image_(x_mod, img_shape)
 
                     if not final_only:
                         images.append(x_mod.to('cpu'))

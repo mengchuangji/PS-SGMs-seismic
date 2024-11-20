@@ -38,7 +38,7 @@ test:
 
 data:
   dataset: "marmousi"
-  image_size: 96
+  image_size: 128
   channels: 1
   logit_transform: false
   uniform_dequantization: false
@@ -47,6 +47,7 @@ data:
   rescaled: false
   seis_rescaled: true
   num_workers: 0 #32
+  image_shape: (128,128)
 
 model:
   sigma_begin: 90

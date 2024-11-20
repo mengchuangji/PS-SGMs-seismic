@@ -46,7 +46,7 @@ optional arguments:
   -s SIGMA_0, --sigma_0 SIGMA_0
                         Noise std to add to observation
   --degradation DEGRADATION
-                        Degradation: inp | den 
+                        Degradation: rec | den 
                         
 
 ```
@@ -121,7 +121,7 @@ This repo is largely based on the [NCSNv2](https://github.com/ermongroup/ncsnv2)
 If you find the code/idea useful for your research, please consider citing
 
 ```bib
-@ARTICLE{10579850,
+@ARTICLE{meng2024stochastic,
   author={Meng, Chuangji and Gao, Jinghuai and Tian, Yajun and Chen, Hongling and Zhang, Wei and Luo, Renyu},
   journal={IEEE Transactions on Geoscience and Remote Sensing}, 
   title={Stochastic Solutions for Simultaneous Seismic Data Denoising and Reconstruction via Score-Based Generative Models}, 
@@ -149,7 +149,7 @@ and/or our earlier work on generative modeling of seismic data
 and/or our earlier work on simultaneous denoising and noise level estimation
 
 ```bib
-@ARTICLE{9775677,
+@ARTICLE{meng2022seismic,
   author={Meng, Chuangji and Gao, Jinghuai and Tian, Yajun and Wang, Zhiqiang},
   journal={IEEE Transactions on Geoscience and Remote Sensing}, 
   title={Seismic Random Noise Attenuation Based on Non-IID Pixel-Wise Gaussian Noise Modeling}, 

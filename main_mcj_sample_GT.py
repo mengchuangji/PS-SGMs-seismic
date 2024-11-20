@@ -53,7 +53,7 @@ def parse_args_and_config():
     #D:\datasets\CelebA\CelebA\Img\img_align_celeba
     parser.add_argument('-n', '--num_variations', type=int, default=1, help='Number of variations to produce')
     parser.add_argument('-s', '--sigma_0', type=float, default=0.1, help='Noise std to add to observation')
-    parser.add_argument('--degradation', type=str, default='den', help='Degradation: inp | deblur_uni | deblur_gauss | sr2 | sr4 | cs4 | cs8 | cs16')
+    parser.add_argument('--degradation', type=str, default='den', help='Degradation: rec | den')
 
     args = parser.parse_args()
     args.log_path = os.path.join(args.exp, 'logs', args.doc)
@@ -140,20 +140,23 @@ def main():
     args.log_path_model ='./exp/logs/marmousi_v2_nm'
     args.image_folder = 'exp/logs/marmousi_v2_nm/results'
 
-    config.data.image_size=128
 
+    # The ckpt_id of the trained SGMs, the SGMs model is provided. Please retrain it if necessary.
     config.sampling.ckpt_id=210000
 
-    args.degradation='inp' # inp  den
+    # 'den' represents the denoising task, and 'rec' represents the reconstruction task (or simultaneous denoising and interpolation)
+    args.degradation='rec' # rec  den
 
+    # The number of data processed at the same time, custom, default is 1
     config.sampling.batch_size=1
+    # The number of samples (random solutions) you want to generate, custom
     args.num_variations=3
+
+    # The parameters of SGMs are fixed and do not need to be set during testing (sampling).
     config.data.seis_rescaled = False # False True
     config.model.num_classes=500
-    # config.model.sigma_begin = 90
-    #denoise
-    config.model.sigma_begin=27 # 9 13 27
-    config.model.sigma_end = 0.01 #0.01
+    config.model.sigma_begin=27 #
+    config.model.sigma_end = 0.01 #
     config.model.sigma_dist = 'geometric'
 
     print(">" * 80)
@@ -179,7 +182,10 @@ def main():
     print("sigma_preset.min:", sigma_preset.min(), "sigma_preset.median:", np.median(sigma_preset), "sigma_preset.max:", sigma_preset.max())
     obs=obs_GT+sigma_preset*torch.randn_like(obs_GT)
 
-    # Automatic noise level estimation by VI-non-IID
+    # Get the shape of the observed data
+    config.data.image_shape = obs_GT1.shape
+
+    # Automatic noise level estimation by VI-non-IID or the user can set it by himself (i.e., according to the interval [sigma_dict['min'],sigma_dict['max']]).
     from utils.estimate_sigma_using_VInonIID import estimate_sigma_using_VInonIID
     sigma_dict,sigma_map_prd =estimate_sigma_using_VInonIID(obs[0].view(1,-1,obs.shape[2],obs.shape[3]))
     # plot_cmap(sigma_map_prd, 300, (3.7, 3), data_range=[0.0, 0.3], cmap=plt.cm.jet, cbar=True)

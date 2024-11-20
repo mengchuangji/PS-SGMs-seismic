@@ -38,70 +38,57 @@ class NCSNRunner():
 
     def sample_general(self, score, samples, init_samples, sigma_0, sigmas, num_variations = 8, deg = 'sr4'):
         ## show stochastic variation ##
-        stochastic_variations = torch.zeros((3 + num_variations) * self.config.sampling.batch_size, self.config.data.channels, self.config.data.image_size,
-                                     self.config.data.image_size)
+        stochastic_variations = torch.zeros((3 + num_variations) * self.config.sampling.batch_size,
+                                            self.config.data.channels, self.config.data.image_shape[0],
+                                            self.config.data.image_shape[1])
         stochastic_variations_R = torch.zeros((3 + num_variations) * self.config.sampling.batch_size,
-                                            self.config.data.channels, self.config.data.image_size,
-                                            self.config.data.image_size)
+                                              self.config.data.channels, self.config.data.image_shape[0],
+                                              self.config.data.image_shape[1])
         stochastic_variations_LS = torch.zeros((3 + num_variations) * self.config.sampling.batch_size,
-                                              self.config.data.channels, self.config.data.image_size,
-                                              self.config.data.image_size)
-
-
+                                               self.config.data.channels, self.config.data.image_shape[0],
+                                               self.config.data.image_shape[1])
 
         # clean = samples.view(samples.shape[0], self.config.data.channels,
-        #                               self.config.data.image_size,
-        #                               self.config.data.image_size)
+        #                               self.config.data.image_shape[0],
+        #                               self.config.data.image_shape[1])
         # sample_gt = inverse_data_transform(self.config, clean)
         # stochastic_variations[0 : self.config.sampling.batch_size,:,:,:] = sample_gt
 
-        img_dim = self.config.data.image_size ** 2
-        image_size=self.config.data.image_size
+        # img_dim = self.config.data.image_size ** 2
+        # image_size=self.config.data.image_size
+        img_dim = self.config.data.image_shape[0] * self.config.data.image_shape[1]
+        # image_size = self.config.data.image_shape[0]
+        self.config.data.image_size = self.config.data.image_shape[1]
 
         ## get degradation matrix ##
         H = 0
-        if deg[:2] == 'cs':
-            ## random with set singular values ##
-            compress_by = int(deg[2:]) #4
-            Vt = torch.rand(img_dim, img_dim).to(self.config.device)#[16384, 16384]
-            Vt, _ = torch.qr(Vt, some=False) #torch.Size([16384, 16384])
-            U = torch.rand(img_dim // compress_by, img_dim // compress_by).to(self.config.device) #[4096, 4096]
-            U, _ = torch.qr(U, some=False)#[4096, 4096]
-            S = torch.hstack((torch.eye(img_dim // compress_by), torch.zeros(img_dim // compress_by, (compress_by-1) * img_dim // compress_by))).to(self.config.device)#[4096, 16384]
-            H = torch.matmul(U, torch.matmul(S, Vt))
-        elif deg == 'den':
-            ## denoise ##
-            # H = torch.eye(img_dim).to(self.config.device)
+        if deg == 'den':
             print('denosing')
-        elif deg == 'syn':
-            ## synthesis ##
-            H = torch.zeros(img_dim).to(self.config.device)
-            # stochastic_variations[0: self.config.sampling.batch_size, :, :, :] = torch.zeros(sample_gt.shape)
-        elif deg == 'inp':
+            pass
+        if deg == 'inp':
+            # Determine the mask based on your actual data, any missing shape is fine.################
+            #  Create a mask: For example, if your data missing values are defined as 0 or nan, then 0 or nan are marked as 0, and the rest are marked as 1. The code is as follows
+            # M = (~torch.isnan(data) & (data != 0)).int()
 
-            ## crop ##
-            H_0 = torch.eye(img_dim).to(self.config.device)
-            # H = H_0[:-(self.config.data.image_size*20), :]
-            H = H_0[:-(self.config.data.image_size * 10), :]
-
-        elif deg == 'inp_v1':
-            # M = torch.ones(self.config.data.image_size, self.config.data.image_size).to(self.config.device)
-            # M[:, self.config.data.image_size // 2:] = 0
+            # Other masks for testing ##########################################################################
+            # M = torch.ones(self.config.data.image_shape[0], self.config.data.image_shape[1]).to(self.config.device)
+            # M[:, self.config.data.image_shape[1] // 2:] = 0
 
             # regular mask
-            def regular_mask(image_size, a):
-                n = image_size  # data.shape[-1]
-                mask = torch.zeros((n, n)).to(self.config.device)
-                for i in range(n):
+            def regular_mask(image_shape, a):
+                n_col = image_shape[1]  # data.shape[-1]
+                mask = torch.zeros((image_shape[0], image_shape[1])).to(self.config.device)
+                for i in range(n_col):
                     if (i + 1) % a == 1:
                         mask[:, i] = 1
                     else:
                         mask[:, i] = 0
                 return mask
-            M=regular_mask(image_size=self.config.data.image_size,a=4)
+
+            M = regular_mask(image_shape=self.config.data.image_shape, a=4)
 
             # # mask 1
-            # M= torch.ones(self.config.data.image_size,self.config.data.image_size).to(self.config.device)
+            # M= torch.ones(self.config.data.image_shape[0],self.config.data.image_shape[1]).to(self.config.device)
             # # 概率置零的概率（这里设置为 0.3）
             # prob = 0.5
             # # 生成概率矩阵（决定每列是否置零）
@@ -111,11 +98,11 @@ class NCSNRunner():
 
             # mask 2
             # 创建一个全为1的矩阵
-            # M = torch.ones(self.config.data.image_size, self.config.data.image_size).to(self.config.device)
+            # M = torch.ones(self.config.data.image_shape[0], self.config.data.image_shape[1]).to(self.config.device)
             # # 将后一半列的值置为0
-            # # M[:, self.config.data.image_size // 2:] = 0
-            # # M[:, 1*self.config.data.image_size // 8: 7*self.config.data.image_size // 8] = 0
-            # M[:, 2 * self.config.data.image_size // 8: 6 * self.config.data.image_size // 8] = 0
+            # # M[:, self.config.data.image_shape[1] // 2:] = 0
+            # # M[:, 1*self.config.data.image_shape[1] // 8: 7*self.config.data.image_shape[1] // 8] = 0
+            # M[:, 2 * self.config.data.image_shape[1] // 8: 6 * self.config.data.image_shape[1] // 8] = 0
 
             # mask 3
             # 加载 .npy 文件为 NumPy 数组
@@ -146,69 +133,18 @@ class NCSNRunner():
                         num_zeros_cols -= min_consecutive_zeros
 
                 return ones_matrix
-            # M=generate_sparse_matrix(self.config.data.image_size,self.config.data.image_size,16).to(self.config.device)
+            # M=generate_sparse_matrix(self.config.data.image_shape[0],self.config.data.image_shape[1],16).to(self.config.device)
 
             # fiexed mask
             # M_np=np.load('/home/shendi_mcj/code/Reproducible/snips_torch-main/inp_masks/mask_rnd_05.npy')
             # #'/home/shendi_mcj/code/Reproducible/snips_torch-main/inp_masks'
             # M = torch.from_numpy(M_np).float().to(self.config.device)
 
-            # H_0 = torch.eye(img_dim).to(self.config.device) * torch.diag(M.flatten())
-            # # 获取只有一个元素值为 1 的所有行
-            # H = H_0[(H_0 == 1.).sum(dim=1) == 1.]
-
-        elif deg == 'inp_v2':
-
-            # # mask 1
-            # M= torch.ones(self.config.data.image_size,self.config.data.image_size).to(self.config.device)
-            # # 概率置零的概率（这里设置为 0.3）
-            # prob = 0.0
-            # # 生成概率矩阵（决定每列是否置零）
-            # prob_tensor = torch.rand(M.shape[1]) < prob
-            # # 将符合条件的列置零
-            # M[:, prob_tensor] = 0
-
-            #mask 2
-            # 创建一个全为1的矩阵
-            M = torch.ones(self.config.data.image_size, self.config.data.image_size).to(self.config.device)
-
-            # 将后一半列的值置为0
-            # M[:, self.config.data.image_size // 2:] = 0
-            # M[:, 1*self.config.data.image_size // 8: 7*self.config.data.image_size // 8] = 0
-            M[:, 2 * self.config.data.image_size // 8: 6 * self.config.data.image_size // 8] = 0
-
-            # mask 3
-            # # 加载 .npy 文件为 NumPy 数组
-            # M = np.load('/home/shendi_mcj/code/Reproducible/snips_torch-main/inp_masks/text_mask_2.npy')
-            # M[M < 255] = 0
-            # M=M/M.max()
-            # # 将 NumPy 数组转换为 PyTorch 的 Tensor
-            # # M = torch.from_numpy(M).float().to(self.config.device)
-            # M = torch.FloatTensor(M).to(self.config.device)
-
-            H_0 = torch.eye(img_dim).to(self.config.device)*torch.diag(M.flatten())
-            # 获取只有一个元素值为 1 的所有行
-            H = H_0[(H_0 == 1.).sum(dim=1) == 1.]
-        elif deg == 'deblur_uni':
-            ## blur ##
-            H = torch.from_numpy(get_custom_kernel(type="uniform", dim = self.config.data.image_size)).type(torch.FloatTensor).to(self.config.device)
-        elif deg == 'deblur_gauss':
-            ## blur ##
-            H = torch.from_numpy(get_custom_kernel(type="gauss", dim = self.config.data.image_size)).type(torch.FloatTensor).to(self.config.device)
-        elif deg[:2] == 'sr':
-            ## downscale - super resolution ##
-            blur_by = int(deg[2:])
-            H = torch.zeros((img_dim // (blur_by**2), img_dim)).to(self.config.device)
-            for i in range(self.config.data.image_size // blur_by):
-                for j in range(self.config.data.image_size // blur_by):
-                    for i_inc in range(blur_by):
-                        for j_inc in range(blur_by):
-                            H[i * self.config.data.image_size // blur_by + j, (blur_by*i + i_inc) * self.config.data.image_size + (blur_by*j + j_inc)] = (1/blur_by**2)
         else:
             print("ERROR: degradation type not supported")
             quit()
 
-        if deg == 'inp_v1':
+        if deg == 'inp':
             y_0 = samples.view(samples.shape[0], self.config.data.channels,
                                                                        img_dim)*M.flatten()
             # y_0 = (samples + sigma_0 * torch.randn_like(samples)).view(samples.shape[0], self.config.data.channels,
@@ -217,7 +153,7 @@ class NCSNRunner():
             #                                               img_dim), os.path.join(self.args.image_folder, "y_0.pt"))
             sio.savemat(os.path.join(self.args.image_folder, "y_0.mat"),
                         {'data': (y_0).view(samples.shape[0], self.config.data.channels,
-                                                          image_size,image_size).cpu().squeeze().numpy()})
+                                                          self.config.data.image_shape[0], self.config.data.image_shape[1]).cpu().squeeze().numpy()})
 
             pinv_y_0 = y_0.view(samples.shape[0] * self.config.data.channels,
                                                       img_dim, 1)
@@ -228,55 +164,17 @@ class NCSNRunner():
             #                                     img_dim), os.path.join(self.args.image_folder, "y_0.pt"))
             sio.savemat(os.path.join(self.args.image_folder, "y_0.mat"),
                         {'data': (y_0).view(samples.shape[0], self.config.data.channels,
-                                            image_size, image_size).cpu().squeeze().numpy()})
+                                            self.config.data.image_shape[0], self.config.data.image_shape[1]).cpu().squeeze().numpy()})
 
             pinv_y_0 = y_0.view(samples.shape[0] * self.config.data.channels,
                                 img_dim, 1)
-        elif deg=='inp_v2':
-            # x_orig = samples #[8, 1, 128, 128]
-            # x_orig = x_orig.to(self.config.device)
-            # x_orig = data_transform(self.config, x_orig)
-            # y_0 = H_funcs.H(x_orig)#[8, 8192]
-            # y_0 = y_0 + sigma_0 * torch.randn_like(y_0)
-            # torch.save(y_0, os.path.join(self.args.image_folder, "y_0.pt"))
-            # pinv_y_0 = H_funcs.H_pinv(y_0).view(y_0.shape[0]* self.config.data.channels, self.config.data.image_size*self.config.data.image_size,1)
-            # y_0=y_0.view(y_0.shape[0], self.config.data.channels, -1)
-            y_0 = torch.matmul(H, samples.view(samples.shape[0] * self.config.data.channels,
-                                               img_dim, 1)).view(samples.shape[0], self.config.data.channels,
-                                                                 H.shape[0])
 
-            # y_0 = y_0 + sigma_0 * torch.randn_like(y_0)
-            # torch.save(y_0, os.path.join(self.args.image_folder, "y_0.pt"))
-            sio.savemat(os.path.join(self.args.image_folder, "y_0.mat"),
-                        {'data': (samples*M).view(samples.shape[0], self.config.data.channels,
-                                            image_size, image_size).cpu().squeeze().numpy()})
-            H_t = H.transpose(0, 1)
-            H_cross = torch.matmul(H_t, torch.inverse(torch.matmul(H, H_t)))
-            pinv_y_0 = torch.matmul(H_cross, y_0.view(samples.shape[0] * self.config.data.channels,
-                                                      H.shape[0], 1))
-        else:
-                y_0 = torch.matmul(H, samples.view(samples.shape[0] * self.config.data.channels,
-                                                   img_dim, 1)).view(samples.shape[0], self.config.data.channels,
-                                                                     H.shape[0]) # (8,1,11264)
-                # y_0 = y_0 + sigma_0 * torch.randn_like(y_0)
-                # torch.save(y_0, os.path.join(self.args.image_folder, "y_0.pt")) # (8,1,11264)
-                sio.savemat(os.path.join(self.args.image_folder, "y_0.mat"),
-                            {'data': (samples*M).view(samples.shape[0], self.config.data.channels,
-                                                image_size, image_size).cpu().squeeze().numpy()})
-                H_t = H.transpose(0, 1) #(16384,11264)
-                H_cross = torch.matmul(H_t, torch.inverse(torch.matmul(H, H_t))) #(16384,11264)
-                pinv_y_0 = torch.matmul(H_cross, y_0.view(samples.shape[0] * self.config.data.channels,
-                                                          H.shape[0], 1)) #(8, 16384, 1)
-
-        if deg == 'deblur_uni' or deg == 'deblur_gauss':
-            pinv_y_0 = y_0
 
         sample_y_0 = inverse_data_transform(self.config, pinv_y_0.view(samples.shape[0], self.config.data.channels,
-                                      self.config.data.image_size,
-                                      self.config.data.image_size))
+                                      self.config.data.image_shape[0], self.config.data.image_shape[1]))
 
 
-        if deg == 'inp_v2' or deg == 'inp_v1':
+        if deg == 'inp':
             stochastic_variations[0 * self.config.sampling.batch_size : 1 * self.config.sampling.batch_size,:,:,:] = sample_y_0#*M
         else:
             stochastic_variations[0 * self.config.sampling.batch_size: 1 * self.config.sampling.batch_size, :, :,:] = sample_y_0
@@ -294,14 +192,13 @@ class NCSNRunner():
                 x_t_list_len= index_arr_len+1
             else:
                 x_t_list_len = index_arr_len+1
-        elif deg == 'inp_v2' or deg == 'inp_v1':
+        elif deg == 'inp':
             x_t_list_len = 11 #11
         else:
             x_t_list_len = 11  # 11
         stochastic_variations_x_t = torch.zeros(
             ((1 + x_t_list_len) * num_variations) * self.config.sampling.batch_size,
-            self.config.data.channels, self.config.data.image_size,
-            self.config.data.image_size)
+            self.config.data.channels, self.config.data.image_shape[0], self.config.data.image_shape[1])
 
         ## apply SNIPS ##
         for i in range(num_variations):
@@ -310,12 +207,16 @@ class NCSNRunner():
             #                                self.config.sampling.step_lr, verbose=True,
             #                                final_only=self.config.sampling.final_only,
             #                                denoise=self.config.sampling.denoise, c_begin=0, sigma_0 = sigma_0)
+
+            # Posterior sampling for denoising tasks
             all_samples, x_t_list = general_anneal_Langevin_dynamics_den(y_0, init_samples, score, sigmas,
                                                            self.config.sampling.n_steps_each,
                                                            self.config.sampling.step_lr, verbose=True,
                                                            final_only=self.config.sampling.final_only,
                                                            denoise=self.config.sampling.denoise, c_begin=0,
                                                            sigma_0=sigma_0)
+
+            # Posterior Sampling for Reconstruction Tasks
             # all_samples, x_t_list = general_anneal_Langevin_dynamics_inp(M, y_0, init_samples, score, sigmas,
             #                                                              self.config.sampling.n_steps_each,
             #                                                              self.config.sampling.step_lr, verbose=True,
@@ -325,12 +226,11 @@ class NCSNRunner():
             #                                                              sigma_0=sigma_0)
 
             sample = all_samples[-1].view(all_samples[-1].shape[0], self.config.data.channels,
-                                      self.config.data.image_size,
-                                      self.config.data.image_size).to(self.config.device)
+                                      self.config.data.image_shape[0], self.config.data.image_shape[1]).to(self.config.device)
             stochastic_variations[(self.config.sampling.batch_size) * (i+1) : (self.config.sampling.batch_size) * (i+2),:,:,:] = inverse_data_transform(self.config, sample)
             # stochastic_variations_x_t[0 : self.config.sampling.batch_size, :, :, :] = sample_gt
             # stochastic_variations_x_t[1 * self.config.sampling.batch_size : 2 * self.config.sampling.batch_size, :, :, :] = sample_y_0
-            if deg == 'inp_v2' or deg == 'inp_v1':
+            if deg == 'inp':
                 sample_y_0[:,:,M<1]=-0.0
                 stochastic_variations_x_t[i * (1+x_t_list_len): i * (1+x_t_list_len)+1 :, :,:] = sample_y_0
                 stochastic_variations[0 * self.config.sampling.batch_size: 1 * self.config.sampling.batch_size, :, :,
@@ -358,8 +258,7 @@ class NCSNRunner():
 
             for j, x_t in enumerate(x_t_list):
                 x_t = x_t.view(sample.shape[0], self.config.data.channels,
-                                          self.config.data.image_size,
-                                          self.config.data.image_size).to(self.config.device)
+                                          self.config.data.image_shape[0], self.config.data.image_shape[1]).to(self.config.device)
                 stochastic_variations_x_t[
                 (self.config.sampling.batch_size)* (j+1+(1+len(x_t_list))*i): (self.config.sampling.batch_size)* (j+2+(1+len(x_t_list))*i), :, :,
                 :] = inverse_data_transform(self.config, x_t)
@@ -385,8 +284,7 @@ class NCSNRunner():
         # calculate mean and std ##
         runs = stochastic_variations[(self.config.sampling.batch_size) * (1) : (self.config.sampling.batch_size) * (1+num_variations),:,:,:]
         runs = runs.view(-1, self.config.sampling.batch_size, self.config.data.channels,
-                          self.config.data.image_size,
-                          self.config.data.image_size)
+                          self.config.data.image_shape[0], self.config.data.image_shape[1])
         stochastic_variations[(self.config.sampling.batch_size) * (-2) : (self.config.sampling.batch_size) * (-1),:,:,:] = torch.mean(runs, dim=0)
         stochastic_variations[(self.config.sampling.batch_size) * (-1) : ,:,:,:] = torch.std(runs, dim=0)
         stochastic_variations_R[(self.config.sampling.batch_size) * (-2): (self.config.sampling.batch_size) * (-1), :, :,
@@ -414,7 +312,7 @@ class NCSNRunner():
         # plt.colorbar()  # 添加色标
         plt.axis('off')  # 关闭坐标轴
         plt.savefig(os.path.join(self.args.image_folder, 'stochastic_variation.png'), dpi=300,bbox_inches='tight')
-        if deg == 'inp_v2' or deg == 'inp_v1':
+        if deg == 'inp':
             sample_y_0[:,:,M < 1] = 0
             stochastic_variations[0 * self.config.sampling.batch_size: 1 * self.config.sampling.batch_size, :, :,
             :] = sample_y_0
@@ -432,7 +330,7 @@ class NCSNRunner():
         # plt.colorbar()  # 添加色标
         plt.axis('off')  # 关闭坐标轴
         plt.savefig(os.path.join(self.args.image_folder, 'stochastic_variation_R.png'), dpi=300, bbox_inches='tight')
-        if deg == 'inp_v2' or deg == 'inp_v1':
+        if deg == 'inp':
             sample_y_0[:, :, M < 1] = 0
             stochastic_variations_R[0 * self.config.sampling.batch_size: 1 * self.config.sampling.batch_size, :, :,
             :] = sample_y_0
