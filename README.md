@@ -89,7 +89,7 @@ python ncsn_runner_mcj_GT.py -i images --config marmousi.yml --doc marmousi_v2_n
 ```
 Samples will be saved in `<exp>/image_samples/marmousi_v2_nm`.
 
-The available degradations are: Denoising (`den`), reconstruction (`inp`). The sigma_0 (noise level of observation) can be set manually or estimated automatically.
+The available degradations are: Denoising (`den`), reconstruction (`rec`). The sigma_0 (noise level of observation) can be set manually or estimated automatically.
 
 If you don't need GT to evaluate the results, use main_mcj_sample_noGT.py for synthetic data (e.g., mat foramt file) and main_mcj_sample_noGT_field.py for real data (SEGY/SGY file format).
 
