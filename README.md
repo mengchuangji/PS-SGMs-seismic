@@ -93,8 +93,8 @@ The available degradations are: Denoising (`den`), reconstruction (`rec`). The s
 
 If you don't need GT to evaluate the results, use main_mcj_sample_noGT.py for synthetic data (e.g., mat foramt file) and main_mcj_sample_noGT_field.py for real data (SEGY/SGY file format).
 
-for denoising, you should  use general_anneal_Langevin_dynamics_den  (function) in runners/ncsn_runner_mcj_noGT.py/runners/ncsn_runner_mcj_GT.py
-for reconstruction, you should  use general_anneal_Langevin_dynamics_inp (function)  in runners/ncsn_runner_mcj_noGT.py
+For denoising, you should  use general_anneal_Langevin_dynamics_den  (function) in runners/ncsn_runner_mcj_noGT.py  or runners/ncsn_runner_mcj_GT.py
+For reconstruction, you should  use general_anneal_Langevin_dynamics_inp (function)  in runners/ncsn_runner_mcj_noGT.py or runners/ncsn_runner_mcj_GT.py
 
 ## Pretrained Checkpoints
 
