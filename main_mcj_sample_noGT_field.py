@@ -179,7 +179,7 @@ def main():
 
     obs = original#[400:400+128,50:50+128]
 
-    # Get the shape of the observed data
+    ## Get the shape of the observed data
     config.data.image_shape = obs.shape
 
     obs = obs/y_max

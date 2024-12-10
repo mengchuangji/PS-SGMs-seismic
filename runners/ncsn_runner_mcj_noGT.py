@@ -65,7 +65,7 @@ class NCSNRunner():
         if deg == 'den':
             print('denosing')
             pass
-        if deg == 'inp':
+        if deg == 'rec':
             # Determine the mask based on your actual data, any missing shape is fine.################
             #  Create a mask: For example, if your data missing values are defined as 0 or nan, then 0 or nan are marked as 0, and the rest are marked as 1. The code is as follows
             # M = (~torch.isnan(data) & (data != 0)).int()
@@ -144,7 +144,7 @@ class NCSNRunner():
             print("ERROR: degradation type not supported")
             quit()
 
-        if deg == 'inp':
+        if deg == 'rec':
             y_0 = samples.view(samples.shape[0], self.config.data.channels,
                                                                        img_dim)*M.flatten()
             # y_0 = (samples + sigma_0 * torch.randn_like(samples)).view(samples.shape[0], self.config.data.channels,
@@ -174,7 +174,7 @@ class NCSNRunner():
                                       self.config.data.image_shape[0], self.config.data.image_shape[1]))
 
 
-        if deg == 'inp':
+        if deg == 'rec':
             stochastic_variations[0 * self.config.sampling.batch_size : 1 * self.config.sampling.batch_size,:,:,:] = sample_y_0#*M
         else:
             stochastic_variations[0 * self.config.sampling.batch_size: 1 * self.config.sampling.batch_size, :, :,:] = sample_y_0
@@ -192,7 +192,7 @@ class NCSNRunner():
                 x_t_list_len= index_arr_len+1
             else:
                 x_t_list_len = index_arr_len+1
-        elif deg == 'inp':
+        elif deg == 'rec':
             x_t_list_len = 11 #11
         else:
             x_t_list_len = 11  # 11
@@ -230,7 +230,7 @@ class NCSNRunner():
             stochastic_variations[(self.config.sampling.batch_size) * (i+1) : (self.config.sampling.batch_size) * (i+2),:,:,:] = inverse_data_transform(self.config, sample)
             # stochastic_variations_x_t[0 : self.config.sampling.batch_size, :, :, :] = sample_gt
             # stochastic_variations_x_t[1 * self.config.sampling.batch_size : 2 * self.config.sampling.batch_size, :, :, :] = sample_y_0
-            if deg == 'inp':
+            if deg == 'rec':
                 sample_y_0[:,:,M<1]=-0.0
                 stochastic_variations_x_t[i * (1+x_t_list_len): i * (1+x_t_list_len)+1 :, :,:] = sample_y_0
                 stochastic_variations[0 * self.config.sampling.batch_size: 1 * self.config.sampling.batch_size, :, :,
@@ -312,7 +312,7 @@ class NCSNRunner():
         # plt.colorbar()  # 添加色标
         plt.axis('off')  # 关闭坐标轴
         plt.savefig(os.path.join(self.args.image_folder, 'stochastic_variation.png'), dpi=300,bbox_inches='tight')
-        if deg == 'inp':
+        if deg == 'rec':
             sample_y_0[:,:,M < 1] = 0
             stochastic_variations[0 * self.config.sampling.batch_size: 1 * self.config.sampling.batch_size, :, :,
             :] = sample_y_0
@@ -330,7 +330,7 @@ class NCSNRunner():
         # plt.colorbar()  # 添加色标
         plt.axis('off')  # 关闭坐标轴
         plt.savefig(os.path.join(self.args.image_folder, 'stochastic_variation_R.png'), dpi=300, bbox_inches='tight')
-        if deg == 'inp':
+        if deg == 'rec':
             sample_y_0[:, :, M < 1] = 0
             stochastic_variations_R[0 * self.config.sampling.batch_size: 1 * self.config.sampling.batch_size, :, :,
             :] = sample_y_0
