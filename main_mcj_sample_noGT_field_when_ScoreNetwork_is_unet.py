@@ -134,13 +134,13 @@ def main():
     logging.info("Exp comment = {}".format(args.comment))
     logging.info("Config =")
 
-    args.doc='MmsSegyopenf'
+    args.doc='MmsSegyopenf_unet'
     args.log_path = os.path.join(args.exp, 'logs', args.doc)
 
 
-    args.log_path_model ='./exp/logs/MmsSegyopenf'
+    args.log_path_model ='./exp/logs/MmsSegyopenf_unet'
 
-    args.image_folder = 'exp/logs/MmsSegyopenf/results'
+    args.image_folder = 'exp/logs/MmsSegyopenf_unet/results'
 
     # The ckpt_id of the trained SGMs, the SGMs model is provided. Please retrain it if necessary.
     config.sampling.ckpt_id = 220000 # or 800000
