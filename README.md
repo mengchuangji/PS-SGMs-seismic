@@ -106,7 +106,7 @@ To **speed up** sampling, we also provide a trained score network implemented wi
 ----------------------------------------------------------------------------------------
 You can also retrain a SGMs (change hyperparameters or datasets , see [NCSNv2_seismic](https://github.com/mengchuangji/ncsnv2_seismic)) to get your own generative model for seismic data or other types of natural image data, remote sensing data, medical imaging data.
 
-Some of the code is for drawing, if you don't need it, you can comment it out. For example, plot stochastic_variations_R, plot stochastic_variations_LS, plot stochastic_variations_x_t in <runner>/ncsn_runner_*.py`
+Some of the code is for drawing, **if you don't need it**, you can comment it out. For example, plot stochastic_variations_R, plot stochastic_variations_LS, plot stochastic_variations_x_t in <runner>/ncsn_runner_*.py`
 
 
 ## Acknowledgement
