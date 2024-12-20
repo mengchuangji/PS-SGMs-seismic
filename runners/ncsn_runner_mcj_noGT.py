@@ -202,6 +202,7 @@ class NCSNRunner():
 
         ## apply SNIPS ##
         for i in range(num_variations):
+
             # all_samples, x_t_list = general_anneal_Langevin_dynamics(H, y_0, init_samples, score, sigmas,
             #                                self.config.sampling.n_steps_each,
             #                                self.config.sampling.step_lr, verbose=True,
@@ -209,7 +210,8 @@ class NCSNRunner():
             #                                denoise=self.config.sampling.denoise, c_begin=0, sigma_0 = sigma_0)
 
             # Posterior sampling for denoising tasks
-            all_samples, x_t_list = general_anneal_Langevin_dynamics_den(y_0, init_samples, score, sigmas,
+            if deg == 'den':
+                all_samples, x_t_list = general_anneal_Langevin_dynamics_den(y_0, init_samples, score, sigmas,
                                                            self.config.sampling.n_steps_each,
                                                            self.config.sampling.step_lr, verbose=True,
                                                            final_only=self.config.sampling.final_only,
@@ -217,13 +219,14 @@ class NCSNRunner():
                                                            sigma_0=sigma_0)
 
             # Posterior Sampling for Reconstruction Tasks
-            # all_samples, x_t_list = general_anneal_Langevin_dynamics_inp(M, y_0, init_samples, score, sigmas,
-            #                                                              self.config.sampling.n_steps_each,
-            #                                                              self.config.sampling.step_lr, verbose=True,
-            #                                                              final_only=self.config.sampling.final_only,
-            #                                                              denoise=self.config.sampling.denoise,
-            #                                                              c_begin=0,
-            #                                                              sigma_0=sigma_0)
+            if deg == 'rec':
+                all_samples, x_t_list = general_anneal_Langevin_dynamics_inp(M, y_0, init_samples, score, sigmas,
+                                                                         self.config.sampling.n_steps_each,
+                                                                         self.config.sampling.step_lr, verbose=True,
+                                                                         final_only=self.config.sampling.final_only,
+                                                                         denoise=self.config.sampling.denoise,
+                                                                         c_begin=0,
+                                                                         sigma_0=sigma_0)
 
             sample = all_samples[-1].view(all_samples[-1].shape[0], self.config.data.channels,
                                       self.config.data.image_shape[0], self.config.data.image_shape[1]).to(self.config.device)

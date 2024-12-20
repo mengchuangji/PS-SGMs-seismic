@@ -270,14 +270,17 @@ class NCSNRunner():
 
         ## apply Langevin_dynamics ##
         for i in range(num_variations):
-          
-            # all_samples, x_t_list = general_anneal_Langevin_dynamics_den(y_0, init_samples, score, sigmas,
-            #                                                self.config.sampling.n_steps_each,
-            #                                                self.config.sampling.step_lr, verbose=True,
-            #                                                final_only=self.config.sampling.final_only,
-            #                                                denoise=self.config.sampling.denoise, c_begin=0,
-            #                                                sigma_0=sigma_0)
-            all_samples, x_t_list = general_anneal_Langevin_dynamics_inp(M, y_0, init_samples, score, sigmas,
+            # Posterior sampling for denoising tasks
+            if deg == 'den':
+                all_samples, x_t_list = general_anneal_Langevin_dynamics_den(y_0, init_samples, score, sigmas,
+                                                           self.config.sampling.n_steps_each,
+                                                           self.config.sampling.step_lr, verbose=True,
+                                                           final_only=self.config.sampling.final_only,
+                                                           denoise=self.config.sampling.denoise, c_begin=0,
+                                                           sigma_0=sigma_0)
+            # Posterior Sampling for Reconstruction Tasks
+            if deg == 'rec':
+                all_samples, x_t_list = general_anneal_Langevin_dynamics_inp(M, y_0, init_samples, score, sigmas,
                                                                          self.config.sampling.n_steps_each,
                                                                          self.config.sampling.step_lr, verbose=True,
                                                                          final_only=self.config.sampling.final_only,

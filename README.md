@@ -51,7 +51,7 @@ optional arguments:
 
 ```
 
-Configuration files are in `config/`. You don't need to include the prefix `config/` when specifying  `--config` . All files generated when running the code is under the directory specified by `--exp`. They are structured as:
+Configuration files are in `configs/`. You don't need to include the prefix `configs/` when specifying  `--config` . All files generated when running the code is under the directory specified by `--exp`. They are structured as:
 
 ```bash
 <exp> # a folder named by the argument `--exp` given to main.py
@@ -93,18 +93,21 @@ The available degradations are: Denoising (`den`), reconstruction (`rec`). The s
 
 If you don't need GT to evaluate the results, use main_mcj_sample_noGT.py for synthetic data (e.g., mat foramt file) and main_mcj_sample_noGT_field.py for real data (SEGY/SGY file format).
 
-For denoising, you should  use general_anneal_Langevin_dynamics_den  (function) in runners/ncsn_runner_mcj_noGT.py  or runners/ncsn_runner_mcj_GT.py
-For reconstruction, you should  use general_anneal_Langevin_dynamics_inp (function)  in runners/ncsn_runner_mcj_noGT.py or runners/ncsn_runner_mcj_GT.py
-
 ## Pretrained Checkpoints
-
 We provide two trained models and log files in files `<exp>/logs/marmousi_v2_nm` and `<exp>/logs/MmsSegyopenf`. see [pretrained model](https://pan.baidu.com/s/1p5y_JC1AWSD7QCWRsSwMFw?pwd=1111), 提取码: 1111.
-
 These checkpoint files are provided as-is from the authors of [NCSNv2_seismic](https://github.com/mengchuangji/ncsnv2_seismic).
+
+To speed up sampling, we also provide a trained score network implemented with Unet in files `<exp>/logs/MmsSegyopenf_unet` (ckpt_id=220000, 800000); see [pretrained model](https://pan.baidu.com/s/1p5y_JC1AWSD7QCWRsSwMFw?pwd=1111), 提取码: 1111.
+; you can run  main_mcj_sample_noGT_field_when_ScoreNetwork_is_unet.py, the config file is `<config>/marmousi_unet.yml`
+
+
 
 **Note**:
 ----------------------------------------------------------------------------------------
 You can also retrain a SGMs (change hyperparameters or datasets , see [NCSNv2_seismic](https://github.com/mengchuangji/ncsnv2_seismic)) to get your own generative model for seismic data or other types of natural image data, remote sensing data, medical imaging data.
+
+Some of the code is for drawing, if you don't need it, you can comment it out. For example, plot stochastic_variations_R, plot stochastic_variations_LS, plot stochastic_variations_x_t in <runner>/ncsn_runner_*.py`
+
 
 ## Acknowledgement
 
