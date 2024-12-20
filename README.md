@@ -97,7 +97,7 @@ If you don't need GT to evaluate the results, use main_mcj_sample_noGT.py for sy
 We provide two trained models and log files in files `<exp>/logs/marmousi_v2_nm` and `<exp>/logs/MmsSegyopenf`. see [pretrained model](https://pan.baidu.com/s/1p5y_JC1AWSD7QCWRsSwMFw?pwd=1111), 提取码: 1111.
 These checkpoint files are provided as-is from the authors of [NCSNv2_seismic](https://github.com/mengchuangji/ncsnv2_seismic).
 
-To speed up sampling, we also provide a trained score network implemented with Unet in files `<exp>/logs/MmsSegyopenf_unet` (ckpt_id=220000, 800000); see [pretrained model](https://pan.baidu.com/s/1p5y_JC1AWSD7QCWRsSwMFw?pwd=1111), 提取码: 1111.
+To speed up sampling, we also provide a trained score network implemented with Unet in files `<exp>/logs/MmsSegyopenf_unet` (ckpt_id=220000, 800000); see [pretrained model](https://pan.baidu.com/s/149cJjFPd5PanTVnxIc9pxw?pwd=1111), 提取码: 1111.
 ; you can run  main_mcj_sample_noGT_field_when_ScoreNetwork_is_unet.py, the config file is `<config>/marmousi_unet.yml`
 
 
